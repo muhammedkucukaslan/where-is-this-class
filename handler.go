@@ -13,7 +13,7 @@ type HandlerManager struct {
 }
 
 type Repo interface {
-	GetClassRoom(code string) (GetClassRoomResponse, error)
+	GetClassRoom(code string, language string) (GetClassRoomResponse, error)
 	CreateClassRoom(*AddClassRoomRequest) error
 }
 
@@ -36,17 +36,18 @@ func Welcome(c *fiber.Ctx) error {
 
 // Get Class Room Handler
 type GetClassRoomResponse struct {
-	Code       string `json:"code"`
-	Building   string `json:"building"`
-	Floor      int    `json:"floor"`
-	FloorName  string `json:"floorName"`
-	Directions string `json:"directions"`
+	Code        string   `json:"code"`
+	Building    string   `json:"building"`
+	Floor       int      `json:"floor"`
+	ImageUrl    string   `json:"imageUrl"`
+	Description string   `json:"description"`
+	Details     []string `json:"details"`
 }
 
 func (h *HandlerManager) GetClassRoom(c *fiber.Ctx) error {
 	code := c.Params("code")
-
-	classroom, err := h.repo.GetClassRoom(code)
+	language := c.Params("language")
+	classroom, err := h.repo.GetClassRoom(code, language)
 	if err != nil {
 		if errors.Is(err, ErrClassRoomNotFound) {
 			h.logger.Errorw("Classroom not found", "code", code)
@@ -59,15 +60,16 @@ func (h *HandlerManager) GetClassRoom(c *fiber.Ctx) error {
 }
 
 type AddClassRoomRequest struct {
-	Code       string `json:"code" validate:"required"`
-	Building   string `json:"building" validate:"required"`
-	Floor      int    `json:"floor" validate:"required"`
-	FloorName  string `json:"floorName" validate:"required"`
-	Directions string `json:"directions" validate:"required"`
+	Code        string   `json:"code" validate:"required"`
+	Language    string   `json:"language" validate:"required"`
+	Building    string   `json:"building" validate:"required"`
+	Floor       int      `json:"floor" validate:"required"`
+	ImageUrl    string   `json:"imageUrl" validate:"required"`
+	Description string   `json:"description" validate:"required"`
+	Details     []string `json:"details" validate:"required"`
 }
 
 func (h *HandlerManager) AddClassRoom(c *fiber.Ctx) error {
-
 	var req AddClassRoomRequest
 	if err := c.BodyParser(req); err != nil && !errors.Is(err, fiber.ErrUnprocessableEntity) {
 		h.logger.Errorw("Error parsing request body", "error", err)
