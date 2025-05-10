@@ -42,5 +42,6 @@ func main() {
 		return c.Status(404).JSON(fiber.Map{})
 	})
 
-	log.Fatal(app.Listen(port))
+	addr := ":" + port
+	log.Fatal(app.Listen(addr))
 }
