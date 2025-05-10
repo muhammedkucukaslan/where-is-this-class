@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"log"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
 	middlewareLogger "github.com/gofiber/fiber/v2/middleware/logger"
@@ -17,6 +18,10 @@ var (
 
 func main() {
 	gotenv.Load()
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000" // for local development
+	}
 
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
@@ -37,5 +42,5 @@ func main() {
 		return c.Status(404).JSON(fiber.Map{})
 	})
 
-	log.Fatal(app.Listen(":3000"))
+	log.Fatal(app.Listen(port))
 }
