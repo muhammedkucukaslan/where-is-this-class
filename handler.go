@@ -24,6 +24,17 @@ func NewHandlerManager(repo Repo, logger *zap.SugaredLogger) *HandlerManager {
 	}
 }
 
+// Healtcheck Handler
+func HealthCheck(c *fiber.Ctx) error {
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "ok"})
+}
+
+// Welcome Handler
+func Welcome(c *fiber.Ctx) error {
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Welcome to the Classroom API. Go `https://github.com/muhammedkucukaslan/where-is-this-class` to check the codebase."})
+}
+
+// Get Class Room Handler
 type GetClassRoomResponse struct {
 	Code       string `json:"code"`
 	Building   string `json:"building"`

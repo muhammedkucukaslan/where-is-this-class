@@ -36,6 +36,9 @@ func main() {
 	}
 	handler := NewHandlerManager(repo, sugar)
 
+	app.Get("/", Welcome)
+	app.Get("/health", HealthCheck)
+
 	app.Get("/:code", handler.GetClassRoom)
 	app.Post("/", handler.AddClassRoom)
 	app.Use(func(c *fiber.Ctx) error {
