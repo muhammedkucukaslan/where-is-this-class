@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
 
@@ -49,6 +50,9 @@ func (p *PostgreStore) CreateClassRoom(req *AddClassRoomRequest) error {
 	addClassRoomCodeQuery := `INSERT INTO class_codes (id, code, visited) VALUES ($1, $2, $3)`
 	_, err = tx.Exec(addClassRoomCodeQuery, classCodeId, req.Code, 0)
 	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+			return ErrClassRoomAlreadyExists
+		}
 		return err
 	}
 
@@ -59,18 +63,19 @@ func (p *PostgreStore) CreateClassRoom(req *AddClassRoomRequest) error {
 		return err
 	}
 
-	addClassRoomTranslationQuery := `INSERT INTO class_room_translations (id, class_room_id, language, building, floor, description) VALUES ($1, $2, $3, $4, $5, $6)`
+	addClassRoomTranslationQuery := `INSERT INTO class_room_translations (id, class_room_id, language, building,  description) VALUES ($1, $2, $3, $4, $5)`
 	classRoomTranslationId := uuid.New()
-	_, err = tx.Exec(addClassRoomTranslationQuery, classRoomTranslationId, classRoomId, req.Language, req.Building, req.Floor, req.Description)
+	_, err = tx.Exec(addClassRoomTranslationQuery, classRoomTranslationId, classRoomId, req.Language, req.Building, req.Description)
 	if err != nil {
 		return err
 	}
 
-	addClassRoomDetailQuery := `INSERT INTO class_room_details (id, class_room_translation_id, detail) VALUES`
+	addClassRoomDetailQuery := `INSERT INTO class_room_translations_details (id, class_room_translation_id, detail) VALUES `
 	for _, detail := range req.Details {
-		values := fmt.Sprintf("(%s, %s, %s)", uuid.New(), classRoomTranslationId, detail)
+		values := fmt.Sprintf("('%s', '%s', '%s'),", uuid.New(), classRoomTranslationId, detail)
 		addClassRoomDetailQuery += values
 	}
+	addClassRoomDetailQuery = addClassRoomDetailQuery[:len(addClassRoomDetailQuery)-1]
 	_, err = tx.Exec(addClassRoomDetailQuery)
 	if err != nil {
 		return err

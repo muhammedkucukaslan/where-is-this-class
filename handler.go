@@ -26,7 +26,7 @@ func NewHandlerManager(repo Repo, logger *zap.SugaredLogger) *HandlerManager {
 
 // Healtcheck Handler
 func HealthCheck(c *fiber.Ctx) error {
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "ok"})
+	return c.Status(fiber.StatusOK).SendString("OK")
 }
 
 // Welcome Handler
@@ -71,7 +71,7 @@ type AddClassRoomRequest struct {
 
 func (h *HandlerManager) AddClassRoom(c *fiber.Ctx) error {
 	var req AddClassRoomRequest
-	if err := c.BodyParser(req); err != nil && !errors.Is(err, fiber.ErrUnprocessableEntity) {
+	if err := c.BodyParser(&req); err != nil && !errors.Is(err, fiber.ErrUnprocessableEntity) {
 		h.logger.Errorw("Error parsing request body", "error", err)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}

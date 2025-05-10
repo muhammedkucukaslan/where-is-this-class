@@ -18,10 +18,8 @@ var (
 
 func main() {
 	gotenv.Load()
+
 	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3000" // for local development
-	}
 
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
@@ -34,17 +32,16 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
+	sugar.Info("Connected to database")
 	handler := NewHandlerManager(repo, sugar)
 
 	app.Get("/", Welcome)
-	app.Get("/health", HealthCheck)
-
-	app.Get("/:code", handler.GetClassRoom)
-	app.Post("/", handler.AddClassRoom)
+	app.Get("/healthcheck", HealthCheck)
+	app.Get("/codes/:code", handler.GetClassRoom)
+	app.Post("/codes", handler.AddClassRoom)
 	app.Use(func(c *fiber.Ctx) error {
 		return c.Status(404).JSON(fiber.Map{})
 	})
 
-	addr := ":" + port
-	log.Fatal(app.Listen(addr))
+	log.Fatal(app.Listen(":" + port))
 }
