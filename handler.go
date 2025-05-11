@@ -36,7 +36,6 @@ func Welcome(c *fiber.Ctx) error {
 
 // Get Class Room Handler
 type GetClassRoomResponse struct {
-	Code        string `json:"code"`
 	Building    string `json:"building"`
 	Floor       int    `json:"floor"`
 	ImageUrl    string `json:"imageUrl"`
@@ -46,7 +45,8 @@ type GetClassRoomResponse struct {
 
 func (h *HandlerManager) GetClassRoom(c *fiber.Ctx) error {
 	code := c.Params("code")
-	language := c.Params("language")
+	language := c.Query("language")
+
 	classroom, err := h.repo.GetClassRoom(code, language)
 	if err != nil {
 		if errors.Is(err, ErrClassRoomNotFound) {

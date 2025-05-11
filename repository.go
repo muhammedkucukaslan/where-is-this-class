@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"os"
 
 	"github.com/google/uuid"
@@ -28,10 +29,33 @@ func NewPostgreStore() (*PostgreStore, error) {
 }
 
 func (p *PostgreStore) GetClassRoom(code string, language string) (GetClassRoomResponse, error) {
-	query := ` SELECT code, building, floor, floor_name, directions FROM classrooms WHERE code = $1 AND language = $2`
+
+	tx, err := p.db.Begin()
+	if err != nil {
+		return GetClassRoomResponse{}, err
+	}
+	defer tx.Rollback()
+
+	query := ` select  building,floor, image_url, description, detail 
+	from class_rooms cr 
+	join class_room_translations crt on cr.id = crt.class_room_id
+	where code = $1 AND  language = $2`
 
 	var classroom GetClassRoomResponse
-	if err := p.db.QueryRow(query, code, language).Scan(&classroom.Code, &classroom.Building, &classroom.Floor); err != nil {
+	if err := tx.QueryRow(query, code, language).Scan(&classroom.Building, &classroom.Floor, &classroom.ImageUrl, &classroom.Description, &classroom.Detail); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return GetClassRoomResponse{}, ErrClassRoomNotFound
+		}
+		return GetClassRoomResponse{}, err
+	}
+
+	visitCountQuery := `UPDATE class_rooms SET visited = visited + 1 WHERE code = $1`
+	_, err = tx.Exec(visitCountQuery, code)
+	if err != nil {
+		return GetClassRoomResponse{}, err
+	}
+
+	if err := tx.Commit(); err != nil {
 		return GetClassRoomResponse{}, err
 	}
 	return classroom, nil
