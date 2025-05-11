@@ -20,8 +20,11 @@ func main() {
 	gotenv.Load()
 
 	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
 
-	logger, _ := zap.NewProduction()
+	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 	sugar := logger.Sugar()
 	app := fiber.New()
