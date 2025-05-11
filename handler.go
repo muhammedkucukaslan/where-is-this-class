@@ -60,11 +60,15 @@ func (h *HandlerManager) GetClassRoom(c *fiber.Ctx) error {
 }
 
 type AddClassRoomRequest struct {
-	Code        string `json:"code" validate:"required"`
+	Code         string        `json:"code" validate:"required"`
+	Floor        int           `json:"floor" validate:"required"`
+	ImageUrl     string        `json:"imageUrl" validate:"required"`
+	Translations []Translation `json:"translations" validate:"required"`
+}
+
+type Translation struct {
 	Language    string `json:"language" validate:"required"`
 	Building    string `json:"building" validate:"required"`
-	Floor       int    `json:"floor" validate:"required"`
-	ImageUrl    string `json:"imageUrl" validate:"required"`
 	Description string `json:"description" validate:"required"`
 	Detail      string `json:"detail" validate:"required"`
 }

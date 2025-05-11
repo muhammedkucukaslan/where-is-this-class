@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/google/uuid"
@@ -78,10 +79,12 @@ func (p *PostgreStore) CreateClassRoom(req *AddClassRoomRequest) error {
 		}
 		return err
 	}
-
-	addClassRoomTranslationQuery := `INSERT INTO class_room_translations (id, class_room_id, language, building,  description, detail) VALUES ($1, $2, $3, $4, $5, $6)`
-	classRoomTranslationId := uuid.New()
-	_, err = tx.Exec(addClassRoomTranslationQuery, classRoomTranslationId, classRoomId, req.Language, req.Building, req.Description, req.Detail)
+	addClassRoomTranslationQuery := `INSERT INTO class_room_translations (id, class_room_id, language, building,  description, detail) VALUES `
+	for _, translation := range req.Translations {
+		values := fmt.Sprintf("('%s', '%s', '%s', '%s', '%s', '%s'),", uuid.New(), classRoomId, translation.Language, translation.Building, translation.Description, translation.Detail)
+		addClassRoomTranslationQuery += values
+	}
+	_, err = tx.Exec(addClassRoomTranslationQuery[:len(addClassRoomTranslationQuery)-1])
 	if err != nil {
 		return err
 	}
