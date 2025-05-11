@@ -2,8 +2,11 @@ package main
 
 import (
 	"errors"
+	"os"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 )
 
@@ -32,6 +35,40 @@ func HealthCheck(c *fiber.Ctx) error {
 // Welcome Handler
 func Welcome(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Welcome to the Classroom API. Go `https://github.com/muhammedkucukaslan/where-is-this-class` to check the codebase."})
+}
+
+type LoginAdminRequest struct {
+	Password string `json:"password" validate:"required"`
+}
+
+// Login Admin Handler
+func LoginAdmin(c *fiber.Ctx) error {
+	var req LoginAdminRequest
+	if err := c.BodyParser(&req); err != nil && !errors.Is(err, fiber.ErrUnprocessableEntity) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	if req.Password != os.Getenv("ADMIN_PASSWORD") {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid password"})
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal server error"})
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "token",
+		Value:    tokenString,
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "strict",
+	})
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 // Get Class Room Handler
