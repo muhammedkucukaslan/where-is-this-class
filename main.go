@@ -45,7 +45,8 @@ func main() {
 	app.Get("/", Welcome)
 	app.Get("/healthcheck", HealthCheck)
 	app.Get("/codes/:code", handler.GetClassRoom)
-	app.Post("/codes", handler.AddClassRoom)
+	app.Post("/codes", AuthMiddleware, handler.AddClassRoom)
+	app.Post("/login", LoginAdmin)
 	app.Use(func(c *fiber.Ctx) error {
 		return c.Status(404).JSON(fiber.Map{})
 	})
