@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	middlewareLogger "github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/subosito/gotenv"
 	"go.uber.org/zap"
@@ -30,7 +31,10 @@ func main() {
 	app := fiber.New()
 
 	app.Use(middlewareLogger.New())
-
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: os.Getenv("CLIENT_URL"),
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
+	}))
 	repo, err := NewPostgreStore()
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
