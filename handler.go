@@ -36,12 +36,12 @@ func Welcome(c *fiber.Ctx) error {
 
 // Get Class Room Handler
 type GetClassRoomResponse struct {
-	Code        string   `json:"code"`
-	Building    string   `json:"building"`
-	Floor       int      `json:"floor"`
-	ImageUrl    string   `json:"imageUrl"`
-	Description string   `json:"description"`
-	Details     []string `json:"details"`
+	Code        string `json:"code"`
+	Building    string `json:"building"`
+	Floor       int    `json:"floor"`
+	ImageUrl    string `json:"imageUrl"`
+	Description string `json:"description"`
+	Detail      string `json:"detail"`
 }
 
 func (h *HandlerManager) GetClassRoom(c *fiber.Ctx) error {
@@ -60,13 +60,13 @@ func (h *HandlerManager) GetClassRoom(c *fiber.Ctx) error {
 }
 
 type AddClassRoomRequest struct {
-	Code        string   `json:"code" validate:"required"`
-	Language    string   `json:"language" validate:"required"`
-	Building    string   `json:"building" validate:"required"`
-	Floor       int      `json:"floor" validate:"required"`
-	ImageUrl    string   `json:"imageUrl" validate:"required"`
-	Description string   `json:"description" validate:"required"`
-	Details     []string `json:"details" validate:"required"`
+	Code        string `json:"code" validate:"required"`
+	Language    string `json:"language" validate:"required"`
+	Building    string `json:"building" validate:"required"`
+	Floor       int    `json:"floor" validate:"required"`
+	ImageUrl    string `json:"imageUrl" validate:"required"`
+	Description string `json:"description" validate:"required"`
+	Detail      string `json:"detail" validate:"required"`
 }
 
 func (h *HandlerManager) AddClassRoom(c *fiber.Ctx) error {

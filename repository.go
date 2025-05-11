@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"os"
 
 	"github.com/google/uuid"
@@ -46,9 +45,9 @@ func (p *PostgreStore) CreateClassRoom(req *AddClassRoomRequest) error {
 	}
 	defer tx.Rollback()
 
-	classCodeId := uuid.New()
-	addClassRoomCodeQuery := `INSERT INTO class_codes (id, code, visited) VALUES ($1, $2, $3)`
-	_, err = tx.Exec(addClassRoomCodeQuery, classCodeId, req.Code, 0)
+	classRoomId := uuid.New()
+	addClassRoomQuery := `INSERT INTO class_rooms (id, code, floor, image_url) VALUES ($1, $2, $3, $4)`
+	_, err = tx.Exec(addClassRoomQuery, classRoomId, req.Code, req.Floor, req.ImageUrl)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
 			return ErrClassRoomAlreadyExists
@@ -56,27 +55,9 @@ func (p *PostgreStore) CreateClassRoom(req *AddClassRoomRequest) error {
 		return err
 	}
 
-	classRoomId := uuid.New()
-	addClassRoomQuery := `INSERT INTO class_rooms (id, class_code_id, floor, image_url) VALUES ($1, $2, $3, $4)`
-	_, err = tx.Exec(addClassRoomQuery, classRoomId, classCodeId, req.Floor, req.ImageUrl)
-	if err != nil {
-		return err
-	}
-
-	addClassRoomTranslationQuery := `INSERT INTO class_room_translations (id, class_room_id, language, building,  description) VALUES ($1, $2, $3, $4, $5)`
+	addClassRoomTranslationQuery := `INSERT INTO class_room_translations (id, class_room_id, language, building,  description, detail) VALUES ($1, $2, $3, $4, $5, $6)`
 	classRoomTranslationId := uuid.New()
-	_, err = tx.Exec(addClassRoomTranslationQuery, classRoomTranslationId, classRoomId, req.Language, req.Building, req.Description)
-	if err != nil {
-		return err
-	}
-
-	addClassRoomDetailQuery := `INSERT INTO class_room_translations_details (id, class_room_translation_id, detail) VALUES `
-	for _, detail := range req.Details {
-		values := fmt.Sprintf("('%s', '%s', '%s'),", uuid.New(), classRoomTranslationId, detail)
-		addClassRoomDetailQuery += values
-	}
-	addClassRoomDetailQuery = addClassRoomDetailQuery[:len(addClassRoomDetailQuery)-1]
-	_, err = tx.Exec(addClassRoomDetailQuery)
+	_, err = tx.Exec(addClassRoomTranslationQuery, classRoomTranslationId, classRoomId, req.Language, req.Building, req.Description, req.Detail)
 	if err != nil {
 		return err
 	}
