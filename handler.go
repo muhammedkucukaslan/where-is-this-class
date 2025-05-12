@@ -18,6 +18,7 @@ type HandlerManager struct {
 type Repo interface {
 	GetClassRoom(code string, language string) (GetClassRoomResponse, error)
 	CreateClassRoom(*AddClassRoomRequest) error
+	GetMostVisitedClassRoom() (GetMostVisitedClassRoomsResponse, error)
 }
 
 func NewHandlerManager(repo Repo, logger *zap.SugaredLogger) *HandlerManager {
@@ -96,6 +97,7 @@ func (h *HandlerManager) GetClassRoom(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(classroom)
 }
 
+// Add Class Room Handler
 type AddClassRoomRequest struct {
 	Code         string        `json:"code" validate:"required"`
 	Floor        int           `json:"floor" validate:"required"`
@@ -128,4 +130,22 @@ func (h *HandlerManager) AddClassRoom(c *fiber.Ctx) error {
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
+}
+
+// Get Most Visited Class Room Handler
+
+type GetMostVisitedClassRoomsResponse []MostVisitedClassRoom
+
+type MostVisitedClassRoom struct {
+	Code    string `json:"code"`
+	Visited int    `json:"visited"`
+}
+
+func (h *HandlerManager) GetMostVisitedClassRoom(c *fiber.Ctx) error {
+	mostVisitedClassRooms, err := h.repo.GetMostVisitedClassRoom()
+	if err != nil {
+		h.logger.Errorw("Error retrieving most visited classrooms", "error", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal server error"})
+	}
+	return c.Status(fiber.StatusOK).JSON(mostVisitedClassRooms)
 }

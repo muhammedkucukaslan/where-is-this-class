@@ -93,3 +93,23 @@ func (p *PostgreStore) CreateClassRoom(req *AddClassRoomRequest) error {
 	}
 	return nil
 }
+
+func (p *PostgreStore) GetMostVisitedClassRoom() (GetMostVisitedClassRoomsResponse, error) {
+	query := `SELECT code, visited FROM class_rooms ORDER BY visited DESC LIMIT 5`
+	rows, err := p.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	mostVisitedClassRooms := GetMostVisitedClassRoomsResponse{}
+	for rows.Next() {
+		var code string
+		var visited int
+		if err := rows.Scan(&code, &visited); err != nil {
+			return nil, err
+		}
+		mostVisitedClassRooms = append(mostVisitedClassRooms, MostVisitedClassRoom{Code: code, Visited: visited})
+	}
+	return mostVisitedClassRooms, nil
+}
