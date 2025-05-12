@@ -49,7 +49,7 @@ func main() {
 	app.Post("/classrooms", AuthMiddleware, handler.AddClassRoom)
 	app.Post("/login", LoginAdmin)
 	app.Use(func(c *fiber.Ctx) error {
-		return c.Status(404).JSON(fiber.Map{})
+		return c.Status(404).JSON(fiber.Map{"error": "The route you are looking for does not exist"})
 	})
 
 	log.Fatal(app.Listen(":" + port))
