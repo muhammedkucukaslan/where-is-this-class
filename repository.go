@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -42,11 +43,19 @@ func (p *PostgreStore) GetClassRoom(code string, language string) (GetClassRoomR
 	where code = $1 AND  language = $2`
 
 	var classroom GetClassRoomResponse
-	if err := tx.QueryRow(query, code, language).Scan(&classroom.Building, &classroom.Floor, &classroom.ImageUrl, &classroom.Description, &classroom.Detail); err != nil {
+	var detail sql.NullString
+
+	if err := tx.QueryRow(query, code, language).Scan(&classroom.Building, &classroom.Floor, &classroom.ImageUrl, &classroom.Description, &detail); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return GetClassRoomResponse{}, ErrClassRoomNotFound
 		}
 		return GetClassRoomResponse{}, err
+	}
+
+	if detail.Valid {
+		classroom.Detail = detail.String
+	} else {
+		classroom.Detail = ""
 	}
 
 	visitCountQuery := `UPDATE class_rooms SET visited = visited + 1 WHERE code = $1`
@@ -78,12 +87,17 @@ func (p *PostgreStore) CreateClassRoom(req *AddClassRoomRequest) error {
 		}
 		return err
 	}
-	addClassRoomTranslationQuery := `INSERT INTO class_room_translations (id, class_room_id, language, building,  description, detail) VALUES `
-	for _, translation := range req.Translations {
-		values := fmt.Sprintf("('%s', '%s', '%s', '%s', '%s', '%s'),", uuid.New(), classRoomId, translation.Language, translation.Building, translation.Description, translation.Detail)
-		addClassRoomTranslationQuery += values
+
+	var addClassRoomTranslationQuery string
+	if req.Translations[0].Detail != "" {
+		fmt.Println("detail is not empty")
+		addClassRoomTranslationQuery = MakeAddClassRoomTranslationQuery(classRoomId, req.Translations)
+	} else {
+		fmt.Println("detail is empty")
+		addClassRoomTranslationQuery = MakeAddClassRoomTranslationQueryWithoutDetail(classRoomId, req.Translations)
 	}
-	_, err = tx.Exec(addClassRoomTranslationQuery[:len(addClassRoomTranslationQuery)-1])
+	fmt.Println(addClassRoomTranslationQuery)
+	_, err = tx.Exec(addClassRoomTranslationQuery)
 	if err != nil {
 		return err
 	}
@@ -92,6 +106,28 @@ func (p *PostgreStore) CreateClassRoom(req *AddClassRoomRequest) error {
 		return err
 	}
 	return nil
+}
+
+func MakeAddClassRoomTranslationQuery(classRoomId uuid.UUID, translations []Translation) string {
+	query := `INSERT INTO class_room_translations (id, class_room_id, language, building,  description, detail) VALUES `
+	for _, translation := range translations {
+		values := fmt.Sprintf("('%s', '%s', '%s', '%s', '%s', '%s'),", uuid.New(), classRoomId, translation.Language, escapeSQLString(translation.Building), escapeSQLString(translation.Description), escapeSQLString(translation.Detail))
+		query += values
+	}
+	return query[:len(query)-1]
+}
+
+func MakeAddClassRoomTranslationQueryWithoutDetail(classRoomId uuid.UUID, translations []Translation) string {
+	query := `INSERT INTO class_room_translations (id, class_room_id, language, building,  description) VALUES `
+	for _, translation := range translations {
+		values := fmt.Sprintf("('%s', '%s', '%s', '%s', '%s'),", uuid.New(), classRoomId, translation.Language, escapeSQLString(translation.Building), escapeSQLString(translation.Description))
+		query += values
+	}
+	return query[:len(query)-1]
+}
+
+func escapeSQLString(input string) string {
+	return strings.ReplaceAll(input, "'", "''")
 }
 
 func (p *PostgreStore) GetMostVisitedClassRoom() (GetMostVisitedClassRoomsResponse, error) {
