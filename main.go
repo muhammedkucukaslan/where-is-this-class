@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	middlewareLogger "github.com/gofiber/fiber/v2/middleware/logger"
@@ -40,7 +41,8 @@ func main() {
 		log.Fatal("Failed to connect to database:", err)
 	}
 	sugar.Info("Connected to database")
-	handler := NewHandlerManager(repo, sugar)
+	validate := validator.New()
+	handler := NewHandlerManager(repo, sugar, validate)
 
 	app.Get("/", Welcome)
 	app.Get("/healthcheck", HealthCheck)

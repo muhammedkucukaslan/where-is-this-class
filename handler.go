@@ -5,14 +5,16 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 )
 
 type HandlerManager struct {
-	repo   Repo
-	logger *zap.SugaredLogger
+	repo     Repo
+	logger   *zap.SugaredLogger
+	validate *validator.Validate
 }
 
 type Repo interface {
@@ -21,10 +23,11 @@ type Repo interface {
 	GetMostVisitedClassRoom() (GetMostVisitedClassRoomsResponse, error)
 }
 
-func NewHandlerManager(repo Repo, logger *zap.SugaredLogger) *HandlerManager {
+func NewHandlerManager(repo Repo, logger *zap.SugaredLogger, validate *validator.Validate) *HandlerManager {
 	return &HandlerManager{
-		repo:   repo,
-		logger: logger,
+		repo:     repo,
+		logger:   logger,
+		validate: validate,
 	}
 }
 
@@ -103,27 +106,35 @@ func (h *HandlerManager) GetClassRoom(c *fiber.Ctx) error {
 
 // Add Class Room Handler
 type AddClassRoomRequest struct {
-	Code         string        `json:"code" validate:"required"`
-	Floor        int           `json:"floor" validate:"required"`
-	ImageUrl     string        `json:"imageUrl" validate:"required"`
-	Translations []Translation `json:"translations" validate:"required"`
+	Code         string        `json:"code" validate:"required,min=1,max=10"`
+	Floor        int           `json:"floor" validate:"required,number"`
+	ImageUrl     string        `json:"imageUrl" validate:"required,url"`
+	Translations []Translation `json:"translations" validate:"required,dive,required"`
 }
 
 type Translation struct {
-	Language    string `json:"language" validate:"required"`
+	Language    string `json:"language" validate:"required,oneof=en tr ar"`
 	Building    string `json:"building" validate:"required"`
 	Description string `json:"description" validate:"required"`
-	Detail      string `json:"detail" validate:"required"`
+	Detail      string `json:"detail"`
 }
 
 func (h *HandlerManager) AddClassRoom(c *fiber.Ctx) error {
 	var req AddClassRoomRequest
+
 	if err := c.BodyParser(&req); err != nil && !errors.Is(err, fiber.ErrUnprocessableEntity) {
 		h.logger.Errorw("Error parsing request body", "error", err)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	err := h.repo.CreateClassRoom(&req)
+	err := h.validate.Struct(req)
+
+	if err != nil {
+		h.logger.Errorw("Validation error", "error", err)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	err = h.repo.CreateClassRoom(&req)
 	if err != nil {
 		if errors.Is(err, ErrClassRoomAlreadyExists) {
 			h.logger.Errorw("Classroom already exists", "code", req.Code)
