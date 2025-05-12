@@ -85,6 +85,10 @@ func (h *HandlerManager) GetClassRoom(c *fiber.Ctx) error {
 	code := c.Params("code")
 	language := c.Query("language")
 
+	if language == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "You must specify 'language' in the query"})
+	}
+
 	classroom, err := h.repo.GetClassRoom(code, language)
 	if err != nil {
 		if errors.Is(err, ErrClassRoomNotFound) {
