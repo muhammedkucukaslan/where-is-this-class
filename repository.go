@@ -88,15 +88,12 @@ func (p *PostgreStore) CreateClassRoom(req *AddClassRoomRequest) error {
 		return err
 	}
 
-	var addClassRoomTranslationQuery string
-	if req.Translations[0].Detail != "" {
-		fmt.Println("detail is not empty")
-		addClassRoomTranslationQuery = MakeAddClassRoomTranslationQuery(classRoomId, req.Translations)
-	} else {
-		fmt.Println("detail is empty")
-		addClassRoomTranslationQuery = MakeAddClassRoomTranslationQueryWithoutDetail(classRoomId, req.Translations)
+	addClassRoomTranslationQuery := `INSERT INTO class_room_translations (id, class_room_id, language, building,  description, detail) VALUES `
+	for _, translation := range req.Translations {
+		values := fmt.Sprintf("('%s', '%s', '%s', '%s', '%s', '%s'),", uuid.New(), classRoomId, translation.Language, escapeSQLString(translation.Building), escapeSQLString(translation.Description), escapeSQLString(translation.Detail))
+		addClassRoomTranslationQuery += values
 	}
-	fmt.Println(addClassRoomTranslationQuery)
+	addClassRoomTranslationQuery = addClassRoomTranslationQuery[:len(addClassRoomTranslationQuery)-1]
 	_, err = tx.Exec(addClassRoomTranslationQuery)
 	if err != nil {
 		return err
@@ -106,24 +103,6 @@ func (p *PostgreStore) CreateClassRoom(req *AddClassRoomRequest) error {
 		return err
 	}
 	return nil
-}
-
-func MakeAddClassRoomTranslationQuery(classRoomId uuid.UUID, translations []Translation) string {
-	query := `INSERT INTO class_room_translations (id, class_room_id, language, building,  description, detail) VALUES `
-	for _, translation := range translations {
-		values := fmt.Sprintf("('%s', '%s', '%s', '%s', '%s', '%s'),", uuid.New(), classRoomId, translation.Language, escapeSQLString(translation.Building), escapeSQLString(translation.Description), escapeSQLString(translation.Detail))
-		query += values
-	}
-	return query[:len(query)-1]
-}
-
-func MakeAddClassRoomTranslationQueryWithoutDetail(classRoomId uuid.UUID, translations []Translation) string {
-	query := `INSERT INTO class_room_translations (id, class_room_id, language, building,  description) VALUES `
-	for _, translation := range translations {
-		values := fmt.Sprintf("('%s', '%s', '%s', '%s', '%s'),", uuid.New(), classRoomId, translation.Language, escapeSQLString(translation.Building), escapeSQLString(translation.Description))
-		query += values
-	}
-	return query[:len(query)-1]
 }
 
 func escapeSQLString(input string) string {
