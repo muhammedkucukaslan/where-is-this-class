@@ -107,7 +107,7 @@ func (h *HandlerManager) GetClassRoom(c *fiber.Ctx) error {
 // Add Class Room Handler
 type AddClassRoomRequest struct {
 	Code         string        `json:"code" validate:"required,min=1,max=10"`
-	Floor        int           `json:"floor" validate:"required"`
+	Floor        *int          `json:"floor" validate:"required"`
 	ImageUrl     string        `json:"imageUrl" validate:"required,url"`
 	Translations []Translation `json:"translations" validate:"required,dive,required"`
 }
