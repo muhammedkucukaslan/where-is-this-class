@@ -100,7 +100,7 @@ POST /classrooms
 ```json
 {
   "code": "string",
-  "floor": integer,
+  "floor": "integer",
   "imageUrl": "string",
   "translations": [
     {
