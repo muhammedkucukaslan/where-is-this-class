@@ -1,4 +1,4 @@
-<h1 align="center">Where Is This Class? 📍</h1>
+<h1 align="center">Where Is This Class? </h1>
 
 <p align="center">
   <img src="./public/image.png" alt="Banner" width="600"/>
@@ -12,6 +12,10 @@
 </p>
 
 A simple API that helps students and staff locate classrooms in a university by entering a class code. It supports multilingual descriptions and records the most searched rooms.
+
+## Live Demo
+
+[Here](https://muhammedkucukaslan.github.io/where-is-this-class-frontend/)
 
 ## Installation
 
@@ -28,6 +32,8 @@ JWT_SECRET=secret
 ADMIN_PASSWORD=admin123
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
 ```
+
+You may do not want to use sql. Only thing you should do is change `repository.go` with respect to the interface that `hander.go` wants.
 
 Run the project:
 
