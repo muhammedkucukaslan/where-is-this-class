@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -92,7 +93,7 @@ func (h *HandlerManager) GetClassRoom(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "You must specify 'language' in the query"})
 	}
 
-	classroom, err := h.repo.GetClassRoom(code, language)
+	classroom, err := h.repo.GetClassRoom(strings.ToUpper(strings.ReplaceAll(code, "%20", "")), language)
 	if err != nil {
 		if errors.Is(err, ErrClassRoomNotFound) {
 			h.logger.Errorw("Classroom not found", "code", code)
